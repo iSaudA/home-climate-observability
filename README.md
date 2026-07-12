@@ -34,7 +34,7 @@ The reference hardware is a Linux mini PC running Docker Engine with enough stor
 
 ## First run
 
-1. Install Docker Engine, Docker Compose v2, `make`, Python 3, PyYAML, pytest, `jq`, and optionally ShellCheck.
+1. Install Docker Engine, Docker Compose v2, `make`, `jq`, and optionally ShellCheck.
 2. Run `make bootstrap`.
 3. Set `HOST_IP` and `GRAFANA_BIND_ADDRESS` in `.env` to appropriate trusted host addresses. Do not use a public interface.
 4. Start only Home Assistant: `make up-ha`, then open port 8123 from the trusted LAN and complete onboarding.
@@ -49,9 +49,9 @@ The policy always recomputes from the baseline: warming → 23°C, stable → 24
 
 ## Commands
 
-Run `make bootstrap`, `make up`, `make down`, `make restart`, `make up-ha`, `make down-ha`, `make up-observability`, `make down-observability`, `make validate`, `make test`, `make logs`, `make status`, or `make backup`.
+Run `make bootstrap`, `make up`, `make down`, `make restart`, `make up-ha`, `make down-ha`, `make up-observability`, `make down-observability`, `make validate`, `make logs`, `make status`, or `make backup`.
 
-`make validate` statically validates Compose, YAML, Prometheus, dashboards, scripts (when ShellCheck exists), Home Assistant configuration, and the reference Python policy. It does not prove LAN discovery, sensor freshness, IR transmission, or physical AC state.
+`make validate` validates Compose, Prometheus, dashboards, shell scripts (when ShellCheck exists), and the actual Home Assistant configuration. It does not prove LAN discovery, sensor freshness, IR transmission, or physical AC state.
 
 ## Security and limitations
 

@@ -1,8 +1,4 @@
 .env
-.venv/
-__pycache__/
-.pytest_cache/
-*.pyc
 secrets/*
 !secrets/.gitkeep
 !secrets/*.example

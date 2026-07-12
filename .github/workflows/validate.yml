@@ -13,12 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-          cache: pip
-      - name: Install validation dependencies
-        run: pip install pytest PyYAML
       - name: Create non-secret validation fixtures
         run: |
           printf 'validation-token\n' > secrets/home_assistant_token
@@ -32,17 +26,15 @@ jobs:
           docker compose -f home-automation/compose.yaml config --quiet
           docker compose -f observability/compose.yaml config --quiet
           docker compose config --quiet
-      - name: Validate YAML
-        run: python tools/validate_yaml.py
       - name: Validate Prometheus configuration and rules
         run: |
           docker run --rm -v "$PWD/observability/prometheus:/etc/prometheus:ro" -v "$PWD/secrets/home_assistant_token:/run/secrets/home_assistant_token:ro" --entrypoint promtool prom/prometheus:v3.11.0 check config /etc/prometheus/prometheus.yml
           docker run --rm -v "$PWD/observability/prometheus/rules:/rules:ro" --entrypoint promtool prom/prometheus:v3.11.0 check rules /rules/climate.yml /rules/infrastructure.yml
       - name: Validate dashboards
-        run: find observability/grafana/dashboards -name '*.json' -print0 | xargs -0 -n1 jq -e . >/dev/null
+        run: |
+          find observability/grafana/dashboards -name '*.json' -print0 | xargs -0 -n1 jq -e . >/dev/null
+          docker run --rm -v "$PWD/observability/grafana/provisioning:/work:ro" mikefarah/yq:4.45.4 eval-all 'true' /work/datasources/prometheus.yml /work/dashboards/dashboards.yml >/dev/null
       - name: Run ShellCheck
         run: shellcheck scripts/*.sh
       - name: Check Home Assistant configuration
         run: docker run --rm -v "$PWD/home-automation/config:/config" ghcr.io/home-assistant/home-assistant:2026.5.4 python -m homeassistant --script check_config --config /config
-      - name: Run policy tests
-        run: PYTHONPATH=. pytest

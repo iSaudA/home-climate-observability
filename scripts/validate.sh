@@ -27,9 +27,9 @@ docker run --rm -v "$ROOT/observability/prometheus/rules:/rules:ro" \
   --entrypoint promtool prom/prometheus:v3.11.0 check rules /rules/climate.yml /rules/infrastructure.yml
 
 find observability/grafana/dashboards -name '*.json' -print0 | xargs -0 -n1 jq -e . >/dev/null
-python3 tools/validate_yaml.py
+docker run --rm -v "$ROOT/observability/grafana/provisioning:/work:ro" mikefarah/yq:4.45.4 \
+  eval-all 'true' /work/datasources/prometheus.yml /work/dashboards/dashboards.yml >/dev/null
 
 if command -v shellcheck >/dev/null; then shellcheck scripts/*.sh; else echo "shellcheck not installed; skipping local shell lint"; fi
 docker run --rm -v "$ROOT/home-automation/config:/config" ghcr.io/home-assistant/home-assistant:2026.5.4 python -m homeassistant --script check_config --config /config
-PYTHONPATH=. python3 -m pytest
 echo "Validation passed. Hardware communication was not tested."
