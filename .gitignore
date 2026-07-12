@@ -4,6 +4,10 @@ secrets/*
 !secrets/*.example
 home-automation/config/.storage/
 home-automation/config/.cloud/
+home-automation/config/.cache/
+home-automation/config/.HA_VERSION
+home-automation/config/.ha_run.lock
+home-automation/config/blueprints/
 home-automation/config/home-assistant_v2.db*
 home-automation/config/home-assistant.log*
 home-automation/config/backups/
