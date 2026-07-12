@@ -1,0 +1,315 @@
+# Source entity mapping: change only these four helpers after UI onboarding.
+input_text:
+  climate_indoor_temperature_source:
+    name: Indoor temperature source entity
+    initial: sensor.replace_indoor_temperature
+    max: 255
+  climate_indoor_humidity_source:
+    name: Indoor humidity source entity
+    initial: sensor.replace_indoor_humidity
+    max: 255
+  climate_weather_source:
+    name: Weather source entity
+    initial: weather.replace_weather
+    max: 255
+  climate_remote_source:
+    name: Broadlink remote entity
+    initial: remote.replace_broadlink
+    max: 255
+  climate_native_source:
+    name: Optional native climate entity
+    initial: ""
+    max: 255
+
+input_boolean:
+  climate_automation_enabled:
+    name: Climate automation enabled
+    initial: false
+  climate_use_native_backend:
+    name: Use native climate backend
+    initial: false
+
+input_number:
+  climate_baseline_target:
+    name: Baseline AC target
+    min: 16
+    max: 30
+    step: 1
+    initial: 24
+    unit_of_measurement: °C
+  climate_minimum_target:
+    name: Minimum AC target
+    min: 16
+    max: 30
+    step: 1
+    initial: 22
+    unit_of_measurement: °C
+  climate_maximum_target:
+    name: Maximum AC target
+    min: 16
+    max: 30
+    step: 1
+    initial: 26
+    unit_of_measurement: °C
+  climate_trend_threshold:
+    name: Outdoor trend threshold
+    min: 0.1
+    max: 5
+    step: 0.1
+    initial: 0.6
+    unit_of_measurement: °C
+  ac_last_commanded_setpoint:
+    name: Last commanded AC setpoint
+    min: 16
+    max: 30
+    step: 1
+    initial: 24
+    unit_of_measurement: °C
+
+input_datetime:
+  ac_last_command_time:
+    name: Last successful AC command time
+    has_date: true
+    has_time: true
+
+counter:
+  ac_ir_commands_total:
+    name: Successful AC IR commands
+    restore: true
+  ac_weather_adjustments_total:
+    name: Applied weather adjustments
+    restore: true
+
+sensor:
+  - platform: statistics
+    name: Climate outdoor temperature change 2h
+    unique_id: climate_outdoor_temperature_change_2h
+    entity_id: sensor.climate_outdoor_temperature
+    state_characteristic: change
+    max_age:
+      hours: 2
+    sampling_size: 500
+    precision: 2
+
+template:
+  - sensor:
+      - name: Climate indoor temperature
+        unique_id: climate_indoor_temperature
+        device_class: temperature
+        state_class: measurement
+        unit_of_measurement: °C
+        availability: >-
+          {% set entity = states('input_text.climate_indoor_temperature_source') %}
+          {{ entity not in ['', 'unknown', 'unavailable'] and is_number(states(entity)) }}
+        state: >-
+          {{ states(states('input_text.climate_indoor_temperature_source')) | float | round(1) }}
+      - name: Climate indoor humidity
+        unique_id: climate_indoor_humidity
+        device_class: humidity
+        state_class: measurement
+        unit_of_measurement: "%"
+        availability: >-
+          {% set entity = states('input_text.climate_indoor_humidity_source') %}
+          {{ entity not in ['', 'unknown', 'unavailable'] and is_number(states(entity)) }}
+        state: >-
+          {{ states(states('input_text.climate_indoor_humidity_source')) | float | round(1) }}
+      - name: Climate outdoor temperature
+        unique_id: climate_outdoor_temperature
+        device_class: temperature
+        state_class: measurement
+        unit_of_measurement: °C
+        availability: >-
+          {% set entity = states('input_text.climate_weather_source') %}
+          {{ entity not in ['', 'unknown', 'unavailable'] and is_number(state_attr(entity, 'temperature')) }}
+        state: >-
+          {{ state_attr(states('input_text.climate_weather_source'), 'temperature') | float | round(1) }}
+      - name: Climate outdoor humidity
+        unique_id: climate_outdoor_humidity
+        device_class: humidity
+        state_class: measurement
+        unit_of_measurement: "%"
+        availability: >-
+          {% set entity = states('input_text.climate_weather_source') %}
+          {{ entity not in ['', 'unknown', 'unavailable'] and is_number(state_attr(entity, 'humidity')) }}
+        state: >-
+          {{ state_attr(states('input_text.climate_weather_source'), 'humidity') | float | round(1) }}
+      - name: Climate temperature difference
+        unique_id: climate_temperature_difference
+        unit_of_measurement: °C
+        state_class: measurement
+        availability: >-
+          {{ is_number(states('sensor.climate_indoor_temperature')) and is_number(states('sensor.climate_outdoor_temperature')) }}
+        state: >-
+          {{ (states('sensor.climate_indoor_temperature') | float - states('sensor.climate_outdoor_temperature') | float) | round(1) }}
+      - name: Climate humidity difference
+        unique_id: climate_humidity_difference
+        unit_of_measurement: "%"
+        state_class: measurement
+        availability: >-
+          {{ is_number(states('sensor.climate_indoor_humidity')) and is_number(states('sensor.climate_outdoor_humidity')) }}
+        state: >-
+          {{ (states('sensor.climate_indoor_humidity') | float - states('sensor.climate_outdoor_humidity') | float) | round(1) }}
+      - name: Climate weather adjustment
+        unique_id: climate_weather_adjustment
+        unit_of_measurement: °C
+        state: >-
+          {% set valid = is_number(states('sensor.climate_outdoor_temperature_change_2h')) %}
+          {% set change = states('sensor.climate_outdoor_temperature_change_2h') | float(0) %}
+          {% set threshold = states('input_number.climate_trend_threshold') | float %}
+          {{ -1 if valid and change >= threshold else 1 if valid and change <= -threshold else 0 }}
+        attributes:
+          trend: >-
+            {% if not is_number(states('sensor.climate_outdoor_temperature_change_2h')) %}
+              unavailable
+            {% else %}
+              {% set value = this.state | int(0) %}
+              {{ 'warming' if value == -1 else 'cooling' if value == 1 else 'stable' }}
+            {% endif %}
+      - name: Climate AC target
+        unique_id: climate_ac_target
+        device_class: temperature
+        unit_of_measurement: °C
+        availability: >-
+          {{ is_number(states('sensor.climate_weather_adjustment')) and
+             is_number(states('input_number.climate_baseline_target')) and
+             states('input_number.climate_minimum_target') | float <= states('input_number.climate_maximum_target') | float }}
+        state: >-
+          {% set baseline = states('input_number.climate_baseline_target') | float %}
+          {% set adjustment = states('sensor.climate_weather_adjustment') | float %}
+          {% set minimum = states('input_number.climate_minimum_target') | float %}
+          {% set maximum = states('input_number.climate_maximum_target') | float %}
+          {{ [[baseline + adjustment, minimum] | max, maximum] | min | round(0) }}
+      - name: Climate temperature error
+        unique_id: climate_temperature_error
+        unit_of_measurement: °C
+        state_class: measurement
+        availability: >-
+          {{ is_number(states('sensor.climate_indoor_temperature')) and is_number(states('sensor.climate_ac_target')) }}
+        state: >-
+          {{ (states('sensor.climate_indoor_temperature') | float - states('sensor.climate_ac_target') | float) | round(1) }}
+      - name: Climate last command age minutes
+        unique_id: climate_last_command_age_minutes
+        unit_of_measurement: min
+        state: >-
+          {% set value = states('input_datetime.ac_last_command_time') %}
+          {{ ((as_timestamp(now()) - as_timestamp(value, as_timestamp(now()))) / 60) | round(1) }}
+  - binary_sensor:
+      - name: Climate controller healthy
+        unique_id: climate_controller_healthy
+        availability: >-
+          {{ is_number(states('sensor.climate_indoor_temperature')) and
+             is_number(states('sensor.climate_outdoor_temperature')) and
+             is_number(states('sensor.climate_outdoor_temperature_change_2h')) }}
+        state: >-
+          {% if is_state('input_boolean.climate_use_native_backend', 'on') %}
+            {{ states(states('input_text.climate_native_source')) not in ['unknown', 'unavailable', ''] }}
+          {% else %}
+            {{ states(states('input_text.climate_remote_source')) not in ['unknown', 'unavailable', ''] }}
+          {% endif %}
+      - name: Climate Broadlink available
+        unique_id: climate_broadlink_available
+        state: >-
+          {% set remote = states('input_text.climate_remote_source') %}
+          {{ remote != '' and states(remote) not in ['unknown', 'unavailable'] }}
+
+script:
+  apply_ac_target:
+    alias: Apply AC target
+    description: Hardware adapter for Broadlink IR or an optional native climate entity.
+    mode: single
+    fields:
+      target:
+        required: true
+        selector:
+          number:
+            min: 16
+            max: 30
+            step: 1
+            unit_of_measurement: °C
+    sequence:
+      - variables:
+          requested: "{{ target | int }}"
+          remote_entity: "{{ states('input_text.climate_remote_source') }}"
+          native_entity: "{{ states('input_text.climate_native_source') }}"
+      - choose:
+          - conditions: "{{ is_state('input_boolean.climate_use_native_backend', 'on') }}"
+            sequence:
+              - condition: template
+                value_template: "{{ native_entity != '' and states(native_entity) not in ['unknown', 'unavailable'] }}"
+              - action: climate.set_hvac_mode
+                target:
+                  entity_id: "{{ native_entity }}"
+                data:
+                  hvac_mode: cool
+              - action: climate.set_temperature
+                target:
+                  entity_id: "{{ native_entity }}"
+                data:
+                  temperature: "{{ requested }}"
+        default:
+          - condition: template
+            value_template: >-
+              {{ requested in [22, 23, 24, 25, 26] and
+                 remote_entity != '' and states(remote_entity) not in ['unknown', 'unavailable'] }}
+          - action: remote.send_command
+            target:
+              entity_id: "{{ remote_entity }}"
+            data:
+              device: air_conditioner
+              command: "{{ 'cool_' ~ requested ~ '_auto' }}"
+          - action: counter.increment
+            target:
+              entity_id: counter.ac_ir_commands_total
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.ac_last_commanded_setpoint
+        data:
+          value: "{{ requested }}"
+      - action: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.ac_last_command_time
+        data:
+          datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+
+automation:
+  - id: climate_apply_stable_target
+    alias: Climate apply stable target
+    description: Applies a valid target only after 15 stable minutes and a 30-minute command interval.
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: sensor.climate_ac_target
+      - trigger: state
+        entity_id: input_boolean.climate_automation_enabled
+        to: "on"
+      - trigger: time_pattern
+        minutes: "/5"
+    conditions:
+      - condition: state
+        entity_id: input_boolean.climate_automation_enabled
+        state: "on"
+      - condition: state
+        entity_id: binary_sensor.climate_controller_healthy
+        state: "on"
+      - condition: template
+        value_template: >-
+          {{ is_number(states('sensor.climate_ac_target')) and
+             as_timestamp(now()) - as_timestamp(states.sensor.climate_ac_target.last_changed) >= 900 and
+             states('sensor.climate_ac_target') | float != states('input_number.ac_last_commanded_setpoint') | float }}
+      - condition: template
+        value_template: >-
+          {% set last = states('input_datetime.ac_last_command_time') %}
+          {{ last in ['unknown', 'unavailable', ''] or as_timestamp(now()) - as_timestamp(last) >= 1800 }}
+    actions:
+      - variables:
+          chosen_target: "{{ states('sensor.climate_ac_target') | int }}"
+          weather_adjusted: >-
+            {{ states('sensor.climate_ac_target') | float != states('input_number.climate_baseline_target') | float }}
+      - action: script.apply_ac_target
+        data:
+          target: "{{ chosen_target }}"
+      - if: "{{ weather_adjusted }}"
+        then:
+          - action: counter.increment
+            target:
+              entity_id: counter.ac_weather_adjustments_total

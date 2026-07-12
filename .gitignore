@@ -1,0 +1,15 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+secrets/*
+!secrets/.gitkeep
+!secrets/*.example
+home-automation/config/.storage/
+home-automation/config/.cloud/
+home-automation/config/home-assistant_v2.db*
+home-automation/config/home-assistant.log*
+home-automation/config/backups/
+backups/
+*.tar.gz

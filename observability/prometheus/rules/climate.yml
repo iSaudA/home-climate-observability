@@ -1,0 +1,84 @@
+groups:
+  - name: climate-recording
+    interval: 30s
+    rules:
+      - record: climate:indoor_temperature_celsius
+        expr: hass_sensor_temperature_celsius{entity="sensor.climate_indoor_temperature"}
+      - record: climate:outdoor_temperature_celsius
+        expr: hass_sensor_temperature_celsius{entity="sensor.climate_outdoor_temperature"}
+      - record: climate:indoor_humidity_percent
+        expr: hass_sensor_humidity_percent{entity="sensor.climate_indoor_humidity"}
+      - record: climate:outdoor_humidity_percent
+        expr: hass_sensor_humidity_percent{entity="sensor.climate_outdoor_humidity"}
+      - record: climate:outdoor_change_2h_celsius
+        expr: hass_sensor_unit_celsius{entity="sensor.climate_outdoor_temperature_change_2h"}
+      - record: climate:calculated_target_celsius
+        expr: hass_sensor_temperature_celsius{entity="sensor.climate_ac_target"}
+      - record: climate:last_commanded_target_celsius
+        expr: hass_input_number_state_celsius{entity="input_number.ac_last_commanded_setpoint"}
+      - record: climate:baseline_target_celsius
+        expr: hass_input_number_state_celsius{entity="input_number.climate_baseline_target"}
+      - record: climate:temperature_error_celsius
+        expr: hass_sensor_unit_celsius{entity="sensor.climate_temperature_error"}
+      - record: climate:indoor_temperature_last_updated_seconds
+        expr: hass_last_updated_time_seconds{entity="sensor.climate_indoor_temperature"}
+      - record: climate:outdoor_temperature_last_updated_seconds
+        expr: hass_last_updated_time_seconds{entity="sensor.climate_outdoor_temperature"}
+      - record: climate:controller_healthy
+        expr: hass_binary_sensor_state{entity="binary_sensor.climate_controller_healthy"}
+      - record: climate:automation_enabled
+        expr: hass_input_boolean_state{entity="input_boolean.climate_automation_enabled"}
+      - record: climate:ir_commands_total
+        expr: hass_counter_state{entity="counter.ac_ir_commands_total"}
+      - record: climate:weather_adjustments_total
+        expr: hass_counter_state{entity="counter.ac_weather_adjustments_total"}
+
+  - name: climate-alerts
+    rules:
+      - alert: HomeAssistantScrapeUnavailable
+        expr: up{job="home-assistant"} == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: Home Assistant metrics are unavailable
+      - alert: IndoorTemperatureMetricStale
+        expr: (time() - climate:indoor_temperature_last_updated_seconds > 900) or (absent(climate:indoor_temperature_last_updated_seconds) and on() up{job="home-assistant"} == 1)
+        for: 1m
+        labels: {severity: warning}
+        annotations:
+          summary: Indoor temperature has been stale for 15 minutes
+      - alert: OutdoorTemperatureMetricStale
+        expr: (time() - climate:outdoor_temperature_last_updated_seconds > 5400) or (absent(climate:outdoor_temperature_last_updated_seconds) and on() up{job="home-assistant"} == 1)
+        for: 1m
+        labels: {severity: warning}
+        annotations:
+          summary: Outdoor temperature has been stale for 90 minutes
+      - alert: ClimateControllerUnhealthy
+        expr: climate:controller_healthy == 0 and on() climate:automation_enabled == 1
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: Climate controller is unhealthy while automation is enabled
+      - alert: ExcessiveIRCommands
+        expr: increase(climate:ir_commands_total[1h]) > 4
+        labels: {severity: warning}
+        annotations:
+          summary: More than four IR commands were accepted in one hour
+      - alert: IndoorTemperatureHigh
+        expr: climate:indoor_temperature_celsius > 30
+        for: 15m
+        labels: {severity: warning}
+        annotations:
+          summary: Indoor temperature is above 30°C
+      - alert: IndoorHumidityHigh
+        expr: climate:indoor_humidity_percent > 70
+        for: 30m
+        labels: {severity: warning}
+        annotations:
+          summary: Indoor humidity is above 70%
+      - alert: ClimateTargetDeviation
+        expr: abs(climate:temperature_error_celsius) > 3 and on() climate:automation_enabled == 1
+        for: 45m
+        labels: {severity: warning}
+        annotations:
+          summary: Indoor temperature differs from target by more than 3°C

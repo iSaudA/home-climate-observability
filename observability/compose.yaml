@@ -1,0 +1,97 @@
+name: home-climate-observability
+services:
+  prometheus:
+    image: prom/prometheus:v3.11.0
+    container_name: home-climate-prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION_TIME:-90d}
+      - --storage.tsdb.retention.size=${PROMETHEUS_RETENTION_SIZE:-10GB}
+      - --web.enable-lifecycle
+    ports:
+      - 127.0.0.1:9090:9090
+    extra_hosts:
+      - climate-host:${HOST_IP:?set HOST_IP in .env}
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+    secrets:
+      - home_assistant_token
+    networks:
+      - observability
+    security_opt:
+      - no-new-privileges:true
+
+  grafana:
+    image: grafana/grafana:13.0.2
+    container_name: home-climate-grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    ports:
+      - ${GRAFANA_BIND_ADDRESS:-127.0.0.1}:${GRAFANA_PORT:-3000}:3000
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD__FILE: /run/secrets/grafana_admin_password
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    secrets:
+      - grafana_admin_password
+    networks:
+      - observability
+    security_opt:
+      - no-new-privileges:true
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.57.0
+    container_name: home-climate-cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+    networks:
+      - observability
+
+  node-exporter:
+    image: prom/node-exporter:v1.11.1
+    container_name: home-climate-node-exporter
+    restart: unless-stopped
+    network_mode: host
+    command:
+      - --path.rootfs=/host
+      - --web.listen-address=${HOST_IP:?set HOST_IP in .env}:9100
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  observability:
+    name: home-climate-observability
+    driver: bridge
+    internal: true
+
+volumes:
+  prometheus-data:
+  grafana-data:
+
+secrets:
+  home_assistant_token:
+    file: ../secrets/home_assistant_token
+  grafana_admin_password:
+    file: ../secrets/grafana_admin_password

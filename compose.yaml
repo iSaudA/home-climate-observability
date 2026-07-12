@@ -1,0 +1,3 @@
+include:
+  - path: home-automation/compose.yaml
+  - path: observability/compose.yaml

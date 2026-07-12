@@ -1,0 +1,36 @@
+default_config:
+
+homeassistant:
+  packages: !include_dir_named packages
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+
+recorder:
+  purge_keep_days: 30
+  commit_interval: 5
+
+lovelace:
+  mode: yaml
+  resources: []
+  dashboards:
+    climate-dashboard:
+      mode: yaml
+      title: Climate
+      icon: mdi:home-thermometer
+      show_in_sidebar: true
+      filename: dashboards/climate.yaml
+
+prometheus:
+  namespace: hass
+  requires_auth: true
+  filter:
+    include_entity_globs:
+      - sensor.climate_*
+      - binary_sensor.climate_*
+      - input_boolean.climate_*
+      - input_number.ac_*
+      - input_number.climate_*
+      - input_datetime.ac_*
+      - counter.ac_*
+      - automation.climate_*

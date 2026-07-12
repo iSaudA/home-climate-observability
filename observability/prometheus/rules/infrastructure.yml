@@ -1,0 +1,51 @@
+groups:
+  - name: infrastructure-alerts
+    rules:
+      - alert: PrometheusTargetDown
+        expr: up == 0
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "Prometheus target {{ $labels.job }} is down"
+      - alert: NodeExporterUnavailable
+        expr: up{job="node-exporter"} == 0
+        for: 5m
+        labels: {severity: critical}
+        annotations:
+          summary: Node Exporter is unavailable
+      - alert: CAdvisorUnavailable
+        expr: up{job="cadvisor"} == 0
+        for: 5m
+        labels: {severity: critical}
+        annotations:
+          summary: cAdvisor is unavailable
+      - alert: HostDiskFreeLow
+        expr: 100 * node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"} < 15
+        for: 15m
+        labels: {severity: warning}
+        annotations:
+          summary: Host disk free space is below 15%
+      - alert: HostMemoryHigh
+        expr: 100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 90
+        for: 15m
+        labels: {severity: warning}
+        annotations:
+          summary: Host memory usage is above 90%
+      - alert: HostCPUHigh
+        expr: 100 * (1 - avg without(cpu) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 90
+        for: 15m
+        labels: {severity: warning}
+        annotations:
+          summary: Host CPU usage is above 90%
+      - alert: PrometheusStorageApproachingLimit
+        expr: prometheus_tsdb_storage_blocks_bytes > 9e9
+        for: 15m
+        labels: {severity: warning}
+        annotations:
+          summary: Prometheus block storage exceeds 9 GB; compare with configured retention size
+      - alert: HomeAssistantContainerMemoryHigh
+        expr: container_memory_working_set_bytes{name=~".*home-assistant.*"} > 1.5e9
+        for: 15m
+        labels: {severity: warning}
+        annotations:
+          summary: Home Assistant container memory exceeds 1.5 GB

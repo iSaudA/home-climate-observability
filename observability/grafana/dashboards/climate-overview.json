@@ -1,0 +1,32 @@
+{
+  "annotations": {"list": []},
+  "description": "Indoor/outdoor conditions, weather-aware targets, and controller health.",
+  "editable": false,
+  "graphTooltip": 1,
+  "panels": [
+    {"type":"stat","title":"Indoor temperature","description":"Normalized indoor sensor","gridPos":{"h":4,"w":4,"x":0,"y":0},"fieldConfig":{"defaults":{"unit":"celsius"},"overrides":[]},"targets":[{"expr":"climate:indoor_temperature_celsius","refId":"A"}]},
+    {"type":"stat","title":"Outdoor temperature","gridPos":{"h":4,"w":4,"x":4,"y":0},"fieldConfig":{"defaults":{"unit":"celsius"},"overrides":[]},"targets":[{"expr":"climate:outdoor_temperature_celsius","refId":"A"}]},
+    {"type":"stat","title":"Indoor humidity","gridPos":{"h":4,"w":4,"x":8,"y":0},"fieldConfig":{"defaults":{"unit":"percent"},"overrides":[]},"targets":[{"expr":"climate:indoor_humidity_percent","refId":"A"}]},
+    {"type":"stat","title":"Outdoor humidity","gridPos":{"h":4,"w":4,"x":12,"y":0},"fieldConfig":{"defaults":{"unit":"percent"},"overrides":[]},"targets":[{"expr":"climate:outdoor_humidity_percent","refId":"A"}]},
+    {"type":"stat","title":"Calculated target","gridPos":{"h":4,"w":4,"x":16,"y":0},"fieldConfig":{"defaults":{"unit":"celsius"},"overrides":[]},"targets":[{"expr":"climate:calculated_target_celsius","refId":"A"}]},
+    {"type":"stat","title":"Last commanded target","gridPos":{"h":4,"w":4,"x":20,"y":0},"fieldConfig":{"defaults":{"unit":"celsius"},"overrides":[]},"targets":[{"expr":"climate:last_commanded_target_celsius","refId":"A"}]},
+    {"type":"stat","title":"Controller health","gridPos":{"h":4,"w":6,"x":0,"y":4},"fieldConfig":{"defaults":{"mappings":[{"type":"value","options":{"0":{"text":"UNHEALTHY","color":"red"},"1":{"text":"HEALTHY","color":"green"}}}],"color":{"mode":"thresholds"},"thresholds":{"mode":"absolute","steps":[{"color":"red","value":null},{"color":"green","value":1}]}},"overrides":[]},"options":{"colorMode":"background"},"targets":[{"expr":"climate:controller_healthy","refId":"A"}]},
+    {"type":"stat","title":"Automation enabled","gridPos":{"h":4,"w":6,"x":6,"y":4},"fieldConfig":{"defaults":{"mappings":[{"type":"value","options":{"0":{"text":"OFF"},"1":{"text":"ON"}}}]},"overrides":[]},"targets":[{"expr":"climate:automation_enabled","refId":"A"}]},
+    {"type":"stat","title":"Outdoor change (2h)","gridPos":{"h":4,"w":6,"x":12,"y":4},"fieldConfig":{"defaults":{"unit":"celsius"},"overrides":[]},"targets":[{"expr":"climate:outdoor_change_2h_celsius","refId":"A"}]},
+    {"type":"stat","title":"Home Assistant scrape","gridPos":{"h":4,"w":6,"x":18,"y":4},"fieldConfig":{"defaults":{"mappings":[{"type":"value","options":{"0":{"text":"DOWN","color":"red"},"1":{"text":"UP","color":"green"}}}]},"overrides":[]},"targets":[{"expr":"up{job=\"home-assistant\"}","refId":"A"}]},
+    {"type":"timeseries","title":"Indoor and outdoor temperature","gridPos":{"h":8,"w":12,"x":0,"y":8},"fieldConfig":{"defaults":{"unit":"celsius"},"overrides":[]},"targets":[{"expr":"climate:indoor_temperature_celsius","legendFormat":"Indoor","refId":"A"},{"expr":"climate:outdoor_temperature_celsius","legendFormat":"Outdoor","refId":"B"}]},
+    {"type":"timeseries","title":"Indoor and outdoor humidity","gridPos":{"h":8,"w":12,"x":12,"y":8},"fieldConfig":{"defaults":{"unit":"percent"},"overrides":[]},"targets":[{"expr":"climate:indoor_humidity_percent","legendFormat":"Indoor","refId":"A"},{"expr":"climate:outdoor_humidity_percent","legendFormat":"Outdoor","refId":"B"}]},
+    {"type":"timeseries","title":"AC baseline, calculated, and commanded targets","gridPos":{"h":8,"w":12,"x":0,"y":16},"fieldConfig":{"defaults":{"unit":"celsius"},"overrides":[]},"targets":[{"expr":"climate:baseline_target_celsius","legendFormat":"Baseline","refId":"A"},{"expr":"climate:calculated_target_celsius","legendFormat":"Calculated","refId":"B"},{"expr":"climate:last_commanded_target_celsius","legendFormat":"Commanded","refId":"C"}]},
+    {"type":"timeseries","title":"Temperature error","gridPos":{"h":8,"w":6,"x":12,"y":16},"fieldConfig":{"defaults":{"unit":"celsius"},"overrides":[]},"targets":[{"expr":"climate:temperature_error_celsius","refId":"A"}]},
+    {"type":"timeseries","title":"IR commands and weather adjustments","gridPos":{"h":8,"w":6,"x":18,"y":16},"targets":[{"expr":"increase(climate:ir_commands_total[1h])","legendFormat":"IR commands/hour","refId":"A"},{"expr":"climate:weather_adjustments_total","legendFormat":"Weather adjustments total","refId":"B"}]}
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": ["climate", "home-assistant"],
+  "templating": {"list": []},
+  "time": {"from": "now-24h", "to": "now"},
+  "timezone": "browser",
+  "title": "Climate Overview",
+  "uid": "home-climate-overview",
+  "version": 1
+}

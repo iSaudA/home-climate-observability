@@ -1,0 +1,20 @@
+name: home-climate-automation
+services:
+  home-assistant:
+    image: ghcr.io/home-assistant/home-assistant:2026.5.4
+    container_name: home-climate-home-assistant
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Riyadh}
+    volumes:
+      - ./config:/config
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8123/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    security_opt:
+      - no-new-privileges:true

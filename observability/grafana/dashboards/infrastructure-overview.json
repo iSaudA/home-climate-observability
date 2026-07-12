@@ -1,0 +1,32 @@
+{
+  "annotations": {"list": []},
+  "description": "Prometheus targets, Linux host health, and Docker container resources.",
+  "editable": false,
+  "graphTooltip": 1,
+  "panels": [
+    {"type":"stat","title":"Prometheus targets up","gridPos":{"h":4,"w":6,"x":0,"y":0},"targets":[{"expr":"sum(up)","refId":"A"}]},
+    {"type":"stat","title":"Prometheus targets down","gridPos":{"h":4,"w":6,"x":6,"y":0},"targets":[{"expr":"sum(up == 0)","refId":"A"}]},
+    {"type":"stat","title":"Host uptime","gridPos":{"h":4,"w":6,"x":12,"y":0},"fieldConfig":{"defaults":{"unit":"s"},"overrides":[]},"targets":[{"expr":"time() - node_boot_time_seconds","refId":"A"}]},
+    {"type":"stat","title":"Prometheus TSDB size","gridPos":{"h":4,"w":6,"x":18,"y":0},"fieldConfig":{"defaults":{"unit":"bytes"},"overrides":[]},"targets":[{"expr":"prometheus_tsdb_storage_blocks_bytes","refId":"A"}]},
+    {"type":"timeseries","title":"Host CPU usage","gridPos":{"h":8,"w":8,"x":0,"y":4},"fieldConfig":{"defaults":{"unit":"percent"},"overrides":[]},"targets":[{"expr":"100 * (1 - avg without(cpu) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])))","legendFormat":"CPU","refId":"A"}]},
+    {"type":"timeseries","title":"Host memory usage","gridPos":{"h":8,"w":8,"x":8,"y":4},"fieldConfig":{"defaults":{"unit":"percent"},"overrides":[]},"targets":[{"expr":"100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)","legendFormat":"Memory","refId":"A"}]},
+    {"type":"timeseries","title":"Host load","gridPos":{"h":8,"w":8,"x":16,"y":4},"targets":[{"expr":"node_load1","legendFormat":"1m","refId":"A"},{"expr":"node_load5","legendFormat":"5m","refId":"B"},{"expr":"node_load15","legendFormat":"15m","refId":"C"}]},
+    {"type":"timeseries","title":"Disk usage","gridPos":{"h":8,"w":8,"x":0,"y":12},"fieldConfig":{"defaults":{"unit":"percent"},"overrides":[]},"targets":[{"expr":"100 * (1 - node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay\"})","legendFormat":"{{mountpoint}}","refId":"A"}]},
+    {"type":"timeseries","title":"Disk I/O","gridPos":{"h":8,"w":8,"x":8,"y":12},"fieldConfig":{"defaults":{"unit":"Bps"},"overrides":[]},"targets":[{"expr":"rate(node_disk_read_bytes_total[5m])","legendFormat":"{{device}} read","refId":"A"},{"expr":"rate(node_disk_written_bytes_total[5m])","legendFormat":"{{device}} write","refId":"B"}]},
+    {"type":"timeseries","title":"Host network throughput","gridPos":{"h":8,"w":8,"x":16,"y":12},"fieldConfig":{"defaults":{"unit":"Bps"},"overrides":[]},"targets":[{"expr":"rate(node_network_receive_bytes_total{device!=\"lo\"}[5m])","legendFormat":"{{device}} receive","refId":"A"},{"expr":"rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m])","legendFormat":"{{device}} transmit","refId":"B"}]},
+    {"type":"timeseries","title":"Container CPU by container","gridPos":{"h":8,"w":8,"x":0,"y":20},"fieldConfig":{"defaults":{"unit":"percentunit"},"overrides":[]},"targets":[{"expr":"sum by (name) (rate(container_cpu_usage_seconds_total{name!=\"\"}[5m]))","legendFormat":"{{name}}","refId":"A"}]},
+    {"type":"timeseries","title":"Container memory by container","gridPos":{"h":8,"w":8,"x":8,"y":20},"fieldConfig":{"defaults":{"unit":"bytes"},"overrides":[]},"targets":[{"expr":"container_memory_working_set_bytes{name!=\"\"}","legendFormat":"{{name}}","refId":"A"}]},
+    {"type":"timeseries","title":"Container network throughput","gridPos":{"h":8,"w":8,"x":16,"y":20},"fieldConfig":{"defaults":{"unit":"Bps"},"overrides":[]},"targets":[{"expr":"sum by (name) (rate(container_network_receive_bytes_total{name!=\"\"}[5m]))","legendFormat":"{{name}} receive","refId":"A"},{"expr":"sum by (name) (rate(container_network_transmit_bytes_total{name!=\"\"}[5m]))","legendFormat":"{{name}} transmit","refId":"B"}]},
+    {"type":"timeseries","title":"Home Assistant resource usage","gridPos":{"h":8,"w":12,"x":0,"y":28},"targets":[{"expr":"rate(container_cpu_usage_seconds_total{name=~\".*home-assistant.*\"}[5m])","legendFormat":"CPU cores","refId":"A"},{"expr":"container_memory_working_set_bytes{name=~\".*home-assistant.*\"}","legendFormat":"Memory bytes","refId":"B"}]},
+    {"type":"stat","title":"Core container presence","description":"Last-seen age from cAdvisor; lower is better.","gridPos":{"h":8,"w":12,"x":12,"y":28},"fieldConfig":{"defaults":{"unit":"s"},"overrides":[]},"targets":[{"expr":"time() - container_last_seen{name=~\".*(home-assistant|prometheus|grafana).*\"}","legendFormat":"{{name}}","refId":"A"}]}
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": ["infrastructure", "docker"],
+  "templating": {"list": []},
+  "time": {"from": "now-6h", "to": "now"},
+  "timezone": "browser",
+  "title": "Infrastructure Overview",
+  "uid": "home-climate-infrastructure",
+  "version": 1
+}

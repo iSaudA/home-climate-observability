@@ -1,0 +1,58 @@
+title: Climate Control
+views:
+  - title: Overview
+    path: overview
+    icon: mdi:home-thermometer
+    cards:
+      - type: glance
+        title: Current conditions
+        entities:
+          - sensor.climate_indoor_temperature
+          - sensor.climate_outdoor_temperature
+          - sensor.climate_temperature_difference
+          - sensor.climate_indoor_humidity
+          - sensor.climate_outdoor_humidity
+          - sensor.climate_humidity_difference
+      - type: entities
+        title: Controller
+        entities:
+          - sensor.climate_outdoor_temperature_change_2h
+          - entity: sensor.climate_weather_adjustment
+            name: Outdoor trend / adjustment
+          - input_number.climate_baseline_target
+          - sensor.climate_ac_target
+          - input_number.ac_last_commanded_setpoint
+          - input_boolean.climate_automation_enabled
+          - binary_sensor.climate_controller_healthy
+          - binary_sensor.climate_broadlink_available
+      - type: history-graph
+        title: Temperature history
+        hours_to_show: 24
+        entities:
+          - sensor.climate_indoor_temperature
+          - sensor.climate_outdoor_temperature
+      - type: history-graph
+        title: Humidity history
+        hours_to_show: 24
+        entities:
+          - sensor.climate_indoor_humidity
+          - sensor.climate_outdoor_humidity
+      - type: history-graph
+        title: AC targets
+        hours_to_show: 24
+        entities:
+          - input_number.climate_baseline_target
+          - sensor.climate_ac_target
+          - input_number.ac_last_commanded_setpoint
+      - type: entities
+        title: Configuration
+        entities:
+          - input_boolean.climate_use_native_backend
+          - input_number.climate_minimum_target
+          - input_number.climate_maximum_target
+          - input_number.climate_trend_threshold
+          - input_text.climate_indoor_temperature_source
+          - input_text.climate_indoor_humidity_source
+          - input_text.climate_weather_source
+          - input_text.climate_remote_source
+          - input_text.climate_native_source
