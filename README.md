@@ -37,16 +37,21 @@ The Home Assistant and observability stacks can be started separately.
 
 Prerequisites: Docker Engine, Docker Compose v2, GNU Make, and `jq`.
 
-1. Run `make bootstrap` and review the generated `.env`.
+1. Run `make bootstrap`, then set `HOST_IP` in `.env` to the mini PC address that Docker can reach.
 2. Start Home Assistant with `make up-ha` and finish its normal onboarding.
 3. Add the Broadlink integration and a weather integration with temperature and humidity, such as OpenWeatherMap.
 4. Follow [Broadlink setup](docs/broadlink-setup.md) and [map the source entities](docs/entity-mapping.md).
 5. Create a Home Assistant token for Prometheus and save it in `secrets/home_assistant_token`.
 6. Start monitoring with `make up-observability`.
-7. Run `make validate` after changing the configuration.
+7. Run `scripts/discover-ha-metrics.sh` to check the live sensor-to-Prometheus path.
+8. Run `make validate` after changing the configuration.
 
 Useful commands are `make up`, `make down`, `make logs`, `make status`, and `make backup`.
 
 ## One limitation
 
 Broadlink IR is one-way. A successful send means the Broadlink accepted the command; it does not confirm that the AC received it. Keep the automation disabled while learning or testing commands. Disable it before using the physical remote when a manual setting needs to remain in place.
+
+## Feedback
+
+This is a personal homelab project awaiting verification with real hardware. If you spot a configuration problem or have a suggestion, please open an issue.

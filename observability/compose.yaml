@@ -22,6 +22,7 @@ services:
       - home_assistant_token
     networks:
       - observability
+      - host-access
     security_opt:
       - no-new-privileges:true
 
@@ -69,14 +70,18 @@ services:
     image: prom/node-exporter:v1.11.1
     container_name: home-climate-node-exporter
     restart: unless-stopped
-    network_mode: host
     command:
-      - --path.rootfs=/host
-      - --web.listen-address=${HOST_IP:?set HOST_IP in .env}:9100
+      - --path.procfs=/host/proc
+      - --path.sysfs=/host/sys
+      - --path.rootfs=/rootfs
       - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
     pid: host
     volumes:
-      - /:/host:ro,rslave
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro,rslave
+    networks:
+      - observability
     security_opt:
       - no-new-privileges:true
 
@@ -85,6 +90,9 @@ networks:
     name: home-climate-observability
     driver: bridge
     internal: true
+  host-access:
+    name: home-climate-host-access
+    driver: bridge
 
 volumes:
   prometheus-data:

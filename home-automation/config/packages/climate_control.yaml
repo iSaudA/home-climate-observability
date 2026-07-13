@@ -1,24 +1,19 @@
-# Source entity mapping: change only these four helpers after UI onboarding.
+# Source entity mapping: change these helpers after UI onboarding.
 input_text:
   climate_indoor_temperature_source:
     name: Indoor temperature source entity
-    initial: sensor.replace_indoor_temperature
     max: 255
   climate_indoor_humidity_source:
     name: Indoor humidity source entity
-    initial: sensor.replace_indoor_humidity
     max: 255
   climate_weather_source:
     name: Weather source entity
-    initial: weather.replace_weather
     max: 255
   climate_remote_source:
     name: Broadlink remote entity
-    initial: remote.replace_broadlink
     max: 255
   climate_native_source:
     name: Optional native climate entity
-    initial: ""
     max: 255
 
 input_boolean:
@@ -63,7 +58,6 @@ input_number:
     min: 16
     max: 30
     step: 1
-    initial: 24
     unit_of_measurement: °C
 
 input_datetime:

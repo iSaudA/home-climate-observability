@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$ROOT"
-export HOST_IP=${HOST_IP:-127.0.0.1}
+export HOST_IP=${HOST_IP:-192.0.2.1}
 export GRAFANA_BIND_ADDRESS=${GRAFANA_BIND_ADDRESS:-127.0.0.1}
 
 cleanup=()

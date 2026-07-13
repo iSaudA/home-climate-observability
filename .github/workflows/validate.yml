@@ -20,7 +20,7 @@ jobs:
           chmod 600 secrets/home_assistant_token secrets/grafana_admin_password
       - name: Validate Compose projects
         env:
-          HOST_IP: 127.0.0.1
+          HOST_IP: 192.0.2.1
           GRAFANA_BIND_ADDRESS: 127.0.0.1
         run: |
           docker compose -f home-automation/compose.yaml config --quiet
